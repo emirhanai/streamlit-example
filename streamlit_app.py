@@ -1,7 +1,4 @@
 from transformers import SegformerFeatureExtractor, SegformerForSemanticSegmentation
-from transformers.modeling_outputs import SemanticSegmenterOutput
-from transformers.feature_extraction_utils import BatchFeature
-from PIL import Image
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -11,13 +8,16 @@ import streamlit as st
 from PIL import Image
 import re
 from io import BytesIO
+import label
+#import pandas as pd
+
 
 def create_model():
-    return SegformerForSemanticSegmentation.from_pretrained("nvidia/segformer-b0-finetuned-ade-512-512")
+    return SegformerForSemanticSegmentation.from_pretrained("nvidia/segformer-b5-finetuned-cityscapes-1024-1024")
 
 
 def create_feature_extractor():
-    return SegformerFeatureExtractor.from_pretrained("nvidia/segformer-b0-finetuned-ade-512-512")
+    return SegformerFeatureExtractor.from_pretrained("nvidia/segformer-b5-finetuned-cityscapes-1024-1024")
 
 
 def postprocess(masks, height, width):
@@ -30,9 +30,7 @@ def postprocess(masks, height, width):
 
     for lbl in np.unique(label_per_pixel):
         color_mask[label_per_pixel == lbl, :] = np.asarray(next(palette)) * 255
-
-    return color_mask
-
+    return color_mask, np.unique(label_per_pixel)
 
 def segment(image: Image, model, feature_extractor) -> torch.Tensor:
     inputs = feature_extractor(
@@ -40,11 +38,12 @@ def segment(image: Image, model, feature_extractor) -> torch.Tensor:
     outputs = model(**inputs)
     masks = outputs.logits
 
-    color_mask = postprocess(masks, image.height, image.width)
+    color_mask = postprocess(masks, image.height, image.width)[0]
+    labell = postprocess(masks, image.height, image.width)[1]
     pred_img = np.array(image.convert('RGB')) * 0.25 + color_mask * 0.75
     pred_img = pred_img.astype(np.uint8)
 
-    return pred_img
+    return pred_img,labell
 
 
 
@@ -60,7 +59,7 @@ def process_file(file):
         Image.open(file),
         st.session_state["model"],
         st.session_state["feature_extractor"]
-    )
+    )[0]
 
 
 def get_uploaded_file():
@@ -80,8 +79,8 @@ def download_button(file, name, format):
 
 
 def run():
-    st.title("Semantic image segmentation")
-    st.subheader("Upload your image and get an image with segmentation")
+    st.title("Image Segmentation by Emirhan")
+    st.subheader("Upload your image and get an image with semantic segmentation")
 
     file = get_uploaded_file()
     if not file:
@@ -89,7 +88,7 @@ def run():
 
     placeholder = st.empty()
     placeholder.info(
-        "Processing..."
+        "Processing your image..."
     )
 
     image = process_file(file)
@@ -106,3 +105,20 @@ def run():
     byte_image = buf.getvalue()
 
     download_button(byte_image, filename, format)
+    st.subheader('These are :blue[_labels_] :label:')
+    placeholder = st.empty()
+    labell = segment(
+        Image.open(file),
+        st.session_state["model"],
+        st.session_state["feature_extractor"]
+    )[1]
+    a = []
+
+    for i in labell:
+        a.append(f"{label.trainId2label[i].name}")
+    placeholder.info(f"{[aa for aa in a]}")
+
+
+if __name__ == "__main__":
+    init()
+    run()
