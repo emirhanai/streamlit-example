@@ -5,7 +5,7 @@ transformers
 torch
 numpy
 seaborn
-itertools
-PIL
+more-itertools
+Pillow
 re
 io
