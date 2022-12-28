@@ -7,5 +7,3 @@ numpy
 seaborn
 more-itertools
 Pillow
-re
-io
