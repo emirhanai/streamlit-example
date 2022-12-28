@@ -128,11 +128,12 @@ if __name__ == "__main__":
     authenticator = stauth.authenticate(names, usernames, hashed_passwords,
                                         'some_cookie_name', 'some_signature_key', cookie_expiry_days=30)
     name, authentication_status = authenticator.login('Login', 'main')
-    if authentication_status:
-        st.write('Welcome *%s*' % (name))
+    if st.session_state["authentication_status"]:
+        authenticator.logout('Logout', 'main')
+        st.write(f'Welcome *{st.session_state["name"]}*')
         init()
         run()
-    elif authentication_status == False:
+    elif st.session_state["authentication_status"] == False:
         st.error('Username/password is incorrect')
-    elif authentication_status == None:
+    elif st.session_state["authentication_status"] == None:
         st.warning('Please enter your username and password')
