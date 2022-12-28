@@ -121,31 +121,5 @@ def run():
 
 
 if __name__ == "__main__":
-    names = ['John Smith', 'Rebecca Briggs']
-    usernames = ['jsmith', 'rbriggs']
-    passwords = ['123', '456']
-    hashed_passwords = stauth.hasher(passwords).generate()
-    credentials = {
-        "usernames":{
-            usernames[0]:{
-                "name":names[0],
-                "password":passwords[0]
-                },
-            usernames[1]:{
-                "name":names[1],
-                "password":passwords[1]
-                }            
-            }
-        }
-    authenticator = stauth.Authenticate(credentials, "app_home", "auth", cookie_expiry_days=30)
-    name, authentication_status = authenticator.login('Login', 'main')
-    
-    if st.session_state["authentication_status"]:
-        authenticator.logout('Logout', 'main')
-        st.write(f'Welcome *{st.session_state["name"]}*')
-        init()
-        run()
-    elif st.session_state["authentication_status"] == False:
-        st.error('Username/password is incorrect')
-    elif st.session_state["authentication_status"] == None:
-        st.warning('Please enter your username and password')
+    init()
+    run()
